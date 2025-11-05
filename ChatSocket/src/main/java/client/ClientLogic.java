@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
 
 public class ClientLogic {
@@ -115,5 +116,13 @@ public class ClientLogic {
 
     public BufferedReader getChatIn() {
         return chatIn;
+    }
+
+    public boolean createChatSession(String passKey, int port, boolean otc) throws IOException {
+        ServerSocket actor = new ServerSocket(port);
+        System.out.println("In ascolto su porta: "+port);
+        System.out.println("PDIDDY!!!!!!"); 
+        return false;
+        
     }
 }
