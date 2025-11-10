@@ -17,13 +17,13 @@ public class AccesFrame extends javax.swing.JFrame {
         initComponents();
         setVisible(true);
         
-        // Connect to server when frame is created
+
         try {
             client = new ClientLogic("", "");
         } catch (IOException e) {
-            logger.log(java.util.logging.Level.SEVERE, "Failed to connect to server", e);
+            logger.log(java.util.logging.Level.SEVERE, "CONNESSIONE AL SERVER FALLITA", e);
             javax.swing.JOptionPane.showMessageDialog(this,
-                    "Cannot connect to server. Please ensure the server is running.",
+                    "Impossibile connettersi al server.",
                     "Connection Error",
                     javax.swing.JOptionPane.ERROR_MESSAGE);
         }
@@ -150,9 +150,9 @@ public class AccesFrame extends javax.swing.JFrame {
         String username = jTextField1.getText();
         String password = new String(jPasswordField1.getPassword());
     
-        if (username.isEmpty() || password.isEmpty()) {
+        if (username.isEmpty() || password.isEmpty() || username.length() <2) {
             javax.swing.JOptionPane.showMessageDialog(this,
-                    "Username e password non possono essere vuoti",
+                    "Username e password non possono essere vuoti o più corti di 2 caratteri",
                     "Input Error",
                     javax.swing.JOptionPane.WARNING_MESSAGE);
             return;

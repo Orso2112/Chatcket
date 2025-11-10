@@ -79,7 +79,6 @@
                                   <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
                               </Group>
                           </Group>
-                          <EmptySpace type="separate" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="jTextField2" min="-2" pref="200" max="-2" attributes="0"/>
                               <Component id="jTextField1" min="-2" pref="200" max="-2" attributes="0"/>
