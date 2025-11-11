@@ -18,6 +18,8 @@ public class RemoveChatDialog extends javax.swing.JDialog {
     public RemoveChatDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        setLocationRelativeTo(parent); // Center relative to parent
+        setResizable(false); // Make it non-resizable
     }
 
     /**

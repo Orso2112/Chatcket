@@ -14,6 +14,8 @@ public class CreateChatDialog extends javax.swing.JDialog {
         this.client = client;
         this.mainFrame = (MainFrame) mainFrame;
         initComponents();
+        setLocationRelativeTo(parent); // Center relative to parent
+        setResizable(false); // Make it non-resizable
         jButton1.setEnabled(jCheckBox1.isSelected());
     }
 
@@ -206,7 +208,7 @@ public class CreateChatDialog extends javax.swing.JDialog {
                 client.createOtcChatSession(port, (MainFrame)mainFrame);
                 JOptionPane.showMessageDialog(this, "Chat OTC creata su localhost:" + port + ". In attesa di connessioni...", "Chat Creata", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                int fixedPort = 8000; // Porta fissa per la creazione locale
+                int fixedPort = 8000;
                 String logFileName = "logbook_" + System.currentTimeMillis() + ".txt";
                 String configFileName = "chat_config_" + System.currentTimeMillis() + ".txt";
                 client.createNonOtcChatSession(fixedPort, logFileName, configFileName, passKey, (MainFrame) mainFrame);

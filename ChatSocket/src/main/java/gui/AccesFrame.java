@@ -15,8 +15,10 @@ public class AccesFrame extends javax.swing.JFrame {
 
     public AccesFrame() {
         initComponents();
+        setLocationRelativeTo(null); // Center the frame
+        setResizable(false); // Make it non-resizable
         setVisible(true);
-        
+
 
         try {
             client = new ClientLogic("", "");
