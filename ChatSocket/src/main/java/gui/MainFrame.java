@@ -16,12 +16,14 @@ public class MainFrame extends javax.swing.JFrame {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
     private String username;
     private ClientLogic client;
-    private final ExecutorService chatExecutor = Executors.newCachedThreadPool(); // Per gestire la ricezione messaggi chat
+    private final ExecutorService chatExecutor = Executors.newCachedThreadPool();
 
     public MainFrame(String username, ClientLogic client) {
         this.username = username;
         this.client = client;
         initComponents();
+        setLocationRelativeTo(null);
+        setResizable(false);
         jLabel1.setText("CIAO, " + username + "!");
     }
 
@@ -233,9 +235,8 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     public void addChatTab(String chatName, ClientLogic chatClient) {
-        ChatPanel chatPanel = new ChatPanel(chatClient, chatName);
+        ChatPanel chatPanel = new ChatPanel(chatClient, chatName, this);
         jTabbedPane1.addTab(chatName, chatPanel);
-
         chatExecutor.submit(chatPanel::startListening);
     }
 
@@ -264,49 +265,52 @@ public class MainFrame extends javax.swing.JFrame {
         private final JTextArea chatArea;
         private final JTextField messageField;
         private final JButton sendButton;
+        private final JButton exitButton; // Nuovo pulsante Esci
         private final ClientLogic chatClient;
         private final String chatName;
+        private final MainFrame mainFrame; // Riferimento al MainFrame
+        private boolean listening = false;
 
-        public ChatPanel(ClientLogic chatClient, String chatName) {
+        public ChatPanel(ClientLogic chatClient, String chatName, MainFrame mainFrame) {
             this.chatClient = chatClient;
             this.chatName = chatName;
-
+            this.mainFrame = mainFrame; // Imposta il riferimento
             setLayout(new BorderLayout());
-
             chatArea = new JTextArea();
             chatArea.setEditable(false);
+            chatArea.setBackground(new java.awt.Color(37, 37, 38));
+            chatArea.setForeground(new java.awt.Color(255, 255, 255));
+            chatArea.setFont(new java.awt.Font("Verdana", java.awt.Font.PLAIN, 12));
             add(new JScrollPane(chatArea), BorderLayout.CENTER);
-
             JPanel inputPanel = new JPanel();
+            inputPanel.setBackground(new java.awt.Color(37, 37, 38));
             messageField = new JTextField(20);
+            messageField.setBackground(new java.awt.Color(60, 60, 60));
+            messageField.setForeground(new java.awt.Color(255, 255, 255));
+            messageField.setFont(new java.awt.Font("Verdana", java.awt.Font.PLAIN, 12));
             sendButton = new JButton("Invia");
+            sendButton.setBackground(new java.awt.Color(50, 50, 50));
+            sendButton.setForeground(new java.awt.Color(255, 255, 255));
+            sendButton.setFont(new java.awt.Font("Verdana", java.awt.Font.PLAIN, 12));
+            exitButton = new JButton("Esci Chat"); // Crea il pulsante
+            exitButton.setBackground(new java.awt.Color(150, 50, 50)); // Colore rosastro
+            exitButton.setForeground(new java.awt.Color(255, 255, 255));
+            exitButton.setFont(new java.awt.Font("Verdana", java.awt.Font.PLAIN, 12));
             inputPanel.add(messageField);
             inputPanel.add(sendButton);
-
+            inputPanel.add(exitButton); // Aggiungi il pulsante Esci al pannello
             add(inputPanel, BorderLayout.SOUTH);
-
-            sendButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    sendMessage();
-                }
-            });
-
-            messageField.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    sendMessage();
-                }
-            });
+            sendButton.addActionListener(e -> sendMessage());
+            messageField.addActionListener(e -> sendMessage());
+            exitButton.addActionListener(e -> exitChat()); // Azione per il pulsante Esci
         }
 
         private void sendMessage() {
             String message = messageField.getText().trim();
             if (!message.isEmpty()) {
                 String fullMessage = username + ": " + message;
-                chatArea.append(fullMessage + "\n");
+                SwingUtilities.invokeLater(() -> chatArea.append(fullMessage + "\n"));
                 messageField.setText("");
-
                 if (chatClient.isP2PConnected()) {
                     chatClient.sendP2PMessage(fullMessage);
                 } else {
@@ -317,12 +321,22 @@ public class MainFrame extends javax.swing.JFrame {
             }
         }
 
+        private void exitChat() { // Metodo per uscire dalla chat
+            if (chatClient.isP2PConnected()) {
+                chatClient.closeP2PResources();
+                System.out.println("Disconnesso dalla chat P2P.");
+                // Rimuove questa scheda dal JTabbedPane
+                jTabbedPane1.remove(this);
+            } else {
+                System.out.println("Nessuna connessione P2P attiva da chiudere.");
+            }
+        }
+
         public void startListening() {
-            chatClient.registerP2PMessageListener(chatName, (msg) -> {
-                SwingUtilities.invokeLater(() -> {
-                    chatArea.append(msg + "\n");
-                });
-            });
+            if (listening) return;
+            listening = true;
+            // Registra il listener passando il nome della chat corrente
+            chatClient.registerP2PMessageListener(chatName, msg -> SwingUtilities.invokeLater(() -> chatArea.append(msg + "\n")));
         }
     }
 
