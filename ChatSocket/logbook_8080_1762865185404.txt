@@ -1,0 +1,3 @@
+[2025-11-11 13:46:42] CLIENT: Connesso correttamente.
+[2025-11-11 13:46:42] CLIENT: Ciao dal client admin!
+[2025-11-11 13:46:54] CLIENT: admin: ciao

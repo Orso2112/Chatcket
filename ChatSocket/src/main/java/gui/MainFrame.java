@@ -7,8 +7,6 @@ import javax.swing.JTextField;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -27,7 +25,6 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel1.setText("CIAO, " + username + "!");
     }
 
-    @SuppressWarnings("unchecked")
     private void initComponents() {
         jPanel1 = new javax.swing.JPanel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
@@ -40,84 +37,51 @@ public class MainFrame extends javax.swing.JFrame {
         jButton5 = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
         jButton7 = new javax.swing.JButton();
-
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(new java.awt.Color(0, 0, 0));
-
         jPanel1.setBackground(new java.awt.Color(37, 37, 38));
         jPanel1.setForeground(new java.awt.Color(255, 255, 255));
-
         jTabbedPane1.setBackground(new java.awt.Color(37, 37, 38));
         jTabbedPane1.setForeground(new java.awt.Color(255, 255, 255));
         jTabbedPane1.setTabPlacement(javax.swing.JTabbedPane.LEFT);
-
         jPanel2.setBackground(new java.awt.Color(37, 37, 38));
         jPanel2.setForeground(new java.awt.Color(255, 255, 255));
-
         jLabel1.setFont(new java.awt.Font("Verdana", 1, 18));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("CIAO,  username!");
-
         jLabel2.setFont(new java.awt.Font("Verdana", 0, 18));
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel2.setText("<html> Questa è la pagina principale: <br> Sulla sinistra troverai tutte le diverse chat in cui ti trovi. <br> Sotto queste istruzioni troverai alcune<br> opzioni come il nome visualizzato ecc... </html>");
+        jLabel2.setText("<html> Questa è la pagina principale: <br> Sulla sinistra troverai tutte le diverse chat in cui ti trovi. <br> Sotto queste istruzioni troverai alcune<br> opzioni come il nome utente, la disconnessione, e la gestione chat. </html>");
         jLabel2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-
         jLabel3.setFont(new java.awt.Font("Verdana", 1, 18));
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
         jLabel3.setText("IMPOSTAZIONI:");
-
         jButton2.setBackground(new java.awt.Color(37, 37, 38));
         jButton2.setFont(new java.awt.Font("Verdana", 1, 12));
         jButton2.setForeground(new java.awt.Color(255, 255, 255));
         jButton2.setText("AGGIUNGI Chat");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
-            }
-        });
-
+        jButton2.addActionListener(evt -> jButton2ActionPerformed(evt));
         jButton3.setBackground(new java.awt.Color(37, 37, 38));
         jButton3.setFont(new java.awt.Font("Verdana", 1, 12));
         jButton3.setForeground(new java.awt.Color(255, 255, 255));
         jButton3.setText("RIMUOVI Chat");
-        jButton3.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton3ActionPerformed(evt);
-            }
-        });
-
+        jButton3.addActionListener(evt -> jButton3ActionPerformed(evt));
         jButton5.setBackground(new java.awt.Color(37, 37, 38));
         jButton5.setFont(new java.awt.Font("Verdana", 1, 12));
         jButton5.setForeground(new java.awt.Color(255, 0, 0));
         jButton5.setText("LOG-OUT");
-        jButton5.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton5ActionPerformed(evt);
-            }
-        });
-
+        jButton5.addActionListener(evt -> jButton5ActionPerformed(evt));
         jButton6.setBackground(new java.awt.Color(37, 37, 38));
         jButton6.setFont(new java.awt.Font("Verdana", 0, 10));
         jButton6.setForeground(new java.awt.Color(102, 0, 0));
         jButton6.setText("SIGN-OUT");
-        jButton6.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton6ActionPerformed(evt);
-            }
-        });
-
+        jButton6.addActionListener(evt -> jButton6ActionPerformed(evt));
         jButton7.setBackground(new java.awt.Color(37, 37, 38));
         jButton7.setFont(new java.awt.Font("Verdana", 1, 12));
         jButton7.setForeground(new java.awt.Color(255, 255, 255));
         jButton7.setText("CREA Chat");
-        jButton7.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton7ActionPerformed(evt);
-            }
-        });
-
+        jButton7.addActionListener(evt -> jButton7ActionPerformed(evt));
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -172,9 +136,7 @@ public class MainFrame extends javax.swing.JFrame {
                                                 .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                 .addContainerGap())
         );
-
         jTabbedPane1.addTab("Main", jPanel2);
-
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -185,7 +147,6 @@ public class MainFrame extends javax.swing.JFrame {
                 jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addComponent(jTabbedPane1)
         );
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -196,7 +157,6 @@ public class MainFrame extends javax.swing.JFrame {
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-
         pack();
     }
 
@@ -212,7 +172,6 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {
         if (client.isModeratorOfP2PChat()) {
-            System.out.println("Sei il moderatore di una chat P2P. Chiudendola prima del log-out...");
             client.exitP2PChat();
         }
         client.closeAllResources();
@@ -238,6 +197,7 @@ public class MainFrame extends javax.swing.JFrame {
         ChatPanel chatPanel = new ChatPanel(chatClient, chatName, this);
         jTabbedPane1.addTab(chatName, chatPanel);
         chatExecutor.submit(chatPanel::startListening);
+        chatClient.registerP2PMessageListener(chatName, chatPanel::onMessageReceived);
     }
 
     public static void main(String args[]) {
@@ -261,20 +221,20 @@ public class MainFrame extends javax.swing.JFrame {
         });
     }
 
-    private class ChatPanel extends JPanel {
+    public class ChatPanel extends JPanel implements ClientLogic.MessageListener {
         private final JTextArea chatArea;
         private final JTextField messageField;
         private final JButton sendButton;
-        private final JButton exitButton; // Nuovo pulsante Esci
+        private final JButton exitButton;
         private final ClientLogic chatClient;
         private final String chatName;
-        private final MainFrame mainFrame; // Riferimento al MainFrame
+        private final MainFrame mainFrame;
         private boolean listening = false;
 
         public ChatPanel(ClientLogic chatClient, String chatName, MainFrame mainFrame) {
             this.chatClient = chatClient;
             this.chatName = chatName;
-            this.mainFrame = mainFrame; // Imposta il riferimento
+            this.mainFrame = mainFrame;
             setLayout(new BorderLayout());
             chatArea = new JTextArea();
             chatArea.setEditable(false);
@@ -292,51 +252,50 @@ public class MainFrame extends javax.swing.JFrame {
             sendButton.setBackground(new java.awt.Color(50, 50, 50));
             sendButton.setForeground(new java.awt.Color(255, 255, 255));
             sendButton.setFont(new java.awt.Font("Verdana", java.awt.Font.PLAIN, 12));
-            exitButton = new JButton("Esci Chat"); // Crea il pulsante
-            exitButton.setBackground(new java.awt.Color(150, 50, 50)); // Colore rosastro
+            exitButton = new JButton("Esci Chat");
+            exitButton.setBackground(new java.awt.Color(150, 50, 50));
             exitButton.setForeground(new java.awt.Color(255, 255, 255));
             exitButton.setFont(new java.awt.Font("Verdana", java.awt.Font.PLAIN, 12));
             inputPanel.add(messageField);
             inputPanel.add(sendButton);
-            inputPanel.add(exitButton); // Aggiungi il pulsante Esci al pannello
+            inputPanel.add(exitButton);
             add(inputPanel, BorderLayout.SOUTH);
             sendButton.addActionListener(e -> sendMessage());
             messageField.addActionListener(e -> sendMessage());
-            exitButton.addActionListener(e -> exitChat()); // Azione per il pulsante Esci
+            exitButton.addActionListener(e -> exitChat());
         }
 
         private void sendMessage() {
             String message = messageField.getText().trim();
             if (!message.isEmpty()) {
                 String fullMessage = username + ": " + message;
-                SwingUtilities.invokeLater(() -> chatArea.append(fullMessage + "\n"));
                 messageField.setText("");
                 if (chatClient.isP2PConnected()) {
                     chatClient.sendP2PMessage(fullMessage);
-                } else {
-                    if (chatClient.isConnectedToChat()) {
-                        chatClient.getChatOut().println(fullMessage);
-                    }
+                } else if (chatClient.isConnectedToChat()) {
+                    chatClient.getChatOut().println(fullMessage);
+                }
+                if (chatClient.isModeratorOfP2PChat()) {
+                    SwingUtilities.invokeLater(() -> chatArea.append(fullMessage + "\n"));
                 }
             }
         }
 
-        private void exitChat() { // Metodo per uscire dalla chat
+        private void exitChat() {
             if (chatClient.isP2PConnected()) {
                 chatClient.closeP2PResources();
-                System.out.println("Disconnesso dalla chat P2P.");
-                // Rimuove questa scheda dal JTabbedPane
                 jTabbedPane1.remove(this);
-            } else {
-                System.out.println("Nessuna connessione P2P attiva da chiudere.");
             }
         }
 
         public void startListening() {
             if (listening) return;
             listening = true;
-            // Registra il listener passando il nome della chat corrente
-            chatClient.registerP2PMessageListener(chatName, msg -> SwingUtilities.invokeLater(() -> chatArea.append(msg + "\n")));
+        }
+
+        @Override
+        public void onMessageReceived(String message) {
+            SwingUtilities.invokeLater(() -> chatArea.append(message + "\n"));
         }
     }
 
