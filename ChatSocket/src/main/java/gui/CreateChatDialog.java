@@ -7,15 +7,15 @@ import javax.swing.JOptionPane;
 public class CreateChatDialog extends javax.swing.JDialog {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(CreateChatDialog.class.getName());
     public static ClientLogic client;
-    private final MainFrame mainFrame; // Riferimento al MainFrame
+    private final MainFrame mainFrame;
 
     public CreateChatDialog(Frame parent, boolean modal, ClientLogic client, MainFrame mainFrame) {
         super(parent, modal);
         this.client = client;
         this.mainFrame = (MainFrame) mainFrame;
         initComponents();
-        setLocationRelativeTo(parent); // Center relative to parent
-        setResizable(false); // Make it non-resizable
+        setLocationRelativeTo(parent);
+        setResizable(false);
         jButton1.setEnabled(jCheckBox1.isSelected());
     }
 
@@ -44,54 +44,29 @@ public class CreateChatDialog extends javax.swing.JDialog {
         jRadioButton1.setForeground(new java.awt.Color(200, 200, 200));
         jRadioButton1.setText("<html> Crea una chat OTC (una tantum).<br> Non verrà salvato nulla e non verrà creato alcun registro. </html>");
         jRadioButton1.setToolTipText("");
-        jRadioButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jRadioButton1ActionPerformed(evt);
-            }
-        });
+        jRadioButton1.addActionListener(evt -> jRadioButton1ActionPerformed(evt));
         jButton2.setBackground(new java.awt.Color(37, 37, 38));
         jButton2.setFont(new java.awt.Font("Verdana", 0, 12));
         jButton2.setForeground(new java.awt.Color(204, 0, 0));
         jButton2.setText("CANCELLA");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
-            }
-        });
+        jButton2.addActionListener(evt -> jButton2ActionPerformed(evt));
         jButton1.setBackground(new java.awt.Color(37, 37, 38));
         jButton1.setFont(new java.awt.Font("Verdana", 0, 12));
         jButton1.setForeground(new java.awt.Color(51, 204, 0));
         jButton1.setText("CONFERMA");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
+        jButton1.addActionListener(evt -> jButton1ActionPerformed(evt));
         jCheckBox1.setBackground(new java.awt.Color(37, 37, 38));
         jCheckBox1.setFont(new java.awt.Font("Verdana", 0, 8));
         jCheckBox1.setForeground(new java.awt.Color(200, 200, 200));
         jCheckBox1.setText("<html> Spuntando questa casella accetti la crittografia <br> delle chat e il funzionamento della responsabilità dell'utente. </html>");
-        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox1ActionPerformed(evt);
-            }
-        });
+        jCheckBox1.addActionListener(evt -> jCheckBox1ActionPerformed(evt));
         jTextField1.setText("passkey");
-        jTextField1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField1ActionPerformed(evt);
-            }
-        });
+        jTextField1.addActionListener(evt -> jTextField1ActionPerformed(evt));
         jLabel4.setFont(new java.awt.Font("Verdana", 1, 12));
         jLabel4.setForeground(new java.awt.Color(255, 255, 255));
         jLabel4.setText("Porta:");
         jTextField2.setText("1024-65535");
-        jTextField2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField2ActionPerformed(evt);
-            }
-        });
-
+        jTextField2.addActionListener(evt -> jTextField2ActionPerformed(evt));
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -150,7 +125,6 @@ public class CreateChatDialog extends javax.swing.JDialog {
                                         .addComponent(jButton1))
                                 .addGap(19, 19, 19))
         );
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -161,7 +135,6 @@ public class CreateChatDialog extends javax.swing.JDialog {
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-
         pack();
     }
 
@@ -169,29 +142,23 @@ public class CreateChatDialog extends javax.swing.JDialog {
         jButton1.setEnabled(jCheckBox1.isSelected());
     }
 
-    private void jRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO add your handling code here:
-    }
+    private void jRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {}
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {
         dispose();
     }
 
-    private void jTextField2ActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO add your handling code here:
-    }
+    private void jTextField2ActionPerformed(java.awt.event.ActionEvent evt) {}
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
         String passKey = jTextField1.getText();
         String portaString = jTextField2.getText();
         boolean isOtc = jRadioButton1.isSelected();
         boolean acceptedTerms = jCheckBox1.isSelected();
-
         if (!acceptedTerms) {
             JOptionPane.showMessageDialog(this, "Devi accettare i termini di crittografia.", "Errore di Validazione", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
         int port;
         try {
             port = Integer.parseInt(portaString);
@@ -202,33 +169,26 @@ public class CreateChatDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "Inserisci un numero di porta valido (1024-65535).", "Errore di Validazione", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
         try {
             if (isOtc) {
-                client.createOtcChatSession(port, (MainFrame)mainFrame);
+                client.createOtcChatSession(port, mainFrame);
                 JOptionPane.showMessageDialog(this, "Chat OTC creata su localhost:" + port + ". In attesa di connessioni...", "Chat Creata", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                int fixedPort = 8000;
-                String logFileName = "logbook_" + System.currentTimeMillis() + ".txt";
-                String configFileName = "chat_config_" + System.currentTimeMillis() + ".txt";
-                client.createNonOtcChatSession(fixedPort, logFileName, configFileName, passKey, (MainFrame) mainFrame);
+                String logFileName = "logbook_" + port + "_" + System.currentTimeMillis() + ".txt";
+                String configFileName = "chat_config_" + port + "_" + System.currentTimeMillis() + ".txt";
+                client.createNonOtcChatSession(port, logFileName, configFileName, passKey, mainFrame);
                 try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(configFileName))) {
                     writer.write("PASSKEY:" + passKey);
                 }
-                JOptionPane.showMessageDialog(this, "Chat NON-OTC creata su localhost:" + fixedPort + ". Logbook: " + logFileName + ", Config: " + configFileName, "Chat Creata", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Chat NON-OTC creata su localhost:" + port + ". Logbook: " + logFileName + ", Config: " + configFileName, "Chat Creata", JOptionPane.INFORMATION_MESSAGE);
             }
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Errore nella creazione del server per la chat: " + e.getMessage(), "Errore", JOptionPane.ERROR_MESSAGE);
-            System.err.println("Errore creazione chat: " + e.getMessage());
-            e.printStackTrace();
         }
-
         dispose();
     }
 
-    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO add your handling code here:
-    }
+    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {}
 
     public static void main(String args[]) {
         try {
@@ -241,19 +201,15 @@ public class CreateChatDialog extends javax.swing.JDialog {
         } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
             logger.log(java.util.logging.Level.SEVERE, null, ex);
         }
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                CreateChatDialog dialog;
-                dialog = new CreateChatDialog(new javax.swing.JFrame(), true, null, null); // Passa null per client e mainFrame
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            CreateChatDialog dialog = new CreateChatDialog(new javax.swing.JFrame(), true, null, null);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 

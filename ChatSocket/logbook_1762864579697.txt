@@ -1,0 +1,4 @@
+[2025-11-11 13:36:31] CLIENT: Connesso correttamente.
+[2025-11-11 13:36:31] CLIENT: Ciao dal client client!
+[2025-11-11 13:36:39] CLIENT: client: ciao
+[2025-11-11 13:36:42] CLIENT: client: sueihf

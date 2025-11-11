@@ -1,7 +1,6 @@
 package client;
 
 import gui.MainFrame;
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -9,10 +8,9 @@ import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 public class ClientLogic {
     public static final int ACCESS_PORT = 7777;
@@ -35,18 +33,16 @@ public class ClientLogic {
     private String ownLogFileName;
     private final Map<String, MessageListener> chatListeners = new ConcurrentHashMap<>();
     private final ExecutorService executor = Executors.newCachedThreadPool();
+    private final List<PrintWriter> p2pConnectedClients = new CopyOnWriteArrayList<>();
 
     public ClientLogic(String username, String psw) throws IOException {
         this.username = username;
         this.psw = psw;
         try {
             accessSock = new Socket(SERVER, ACCESS_PORT);
-            System.out.println("Connesso al server di accesso");
             accessOut = new PrintWriter(accessSock.getOutputStream(), true);
             accessIn = new BufferedReader(new InputStreamReader(accessSock.getInputStream()));
         } catch (IOException e) {
-            System.err.println("Impossibile connettersi al server su " + SERVER + ":" + ACCESS_PORT);
-            System.err.println("Assicurarsi che il server sia in esecuzione.");
             closeAccessResources();
             throw e;
         }
@@ -69,8 +65,7 @@ public class ClientLogic {
 
     public String register(String username, String psw) throws IOException {
         accessOut.println("u:" + username + ":" + psw);
-        String response = accessIn.readLine();
-        return response;
+        return accessIn.readLine();
     }
 
     public boolean connectToChatServer(String username) throws IOException {
@@ -79,17 +74,10 @@ public class ClientLogic {
             chatOut = new PrintWriter(chatSock.getOutputStream(), true);
             chatIn = new BufferedReader(new InputStreamReader(chatSock.getInputStream()));
             chatOut.println(username);
-            System.out.println("Connesso al Server Chat sulla Porta " + CHAT_PORT);
             nome = username;
-            executor.submit(new Runnable() {
-                @Override
-                public void run() {
-                    listenForMessages();
-                }
-            });
+            executor.submit(this::listenForMessages);
             return true;
         } catch (IOException e) {
-            System.err.println("Impossibile connettersi al Server Centrale: " + e.getMessage());
             throw e;
         }
     }
@@ -98,10 +86,8 @@ public class ClientLogic {
         try {
             String message;
             while ((message = chatIn.readLine()) != null) {
-                System.out.println("Ricevuto (centrale): " + message);
             }
         } catch (IOException e) {
-            System.err.println("Errore nella ricezione messaggi (centrale): " + e.getMessage());
         }
     }
 
@@ -115,7 +101,6 @@ public class ClientLogic {
             if (accessIn != null) accessIn.close();
             if (accessSock != null && !accessSock.isClosed()) accessSock.close();
         } catch (IOException e) {
-            System.err.println("Errore durante la Chiusura delle Risorse: " + e.getMessage());
         }
     }
 
@@ -125,7 +110,6 @@ public class ClientLogic {
             if (chatIn != null) chatIn.close();
             if (chatSock != null && !chatSock.isClosed()) chatSock.close();
         } catch (IOException e) {
-            System.err.println("Errore durante la Chiusura delle Risorse: " + e.getMessage());
         }
     }
 
@@ -136,10 +120,9 @@ public class ClientLogic {
             if (p2pChatSocket != null && !p2pChatSocket.isClosed()) p2pChatSocket.close();
             if (ownServerSocket != null && !ownServerSocket.isClosed()) {
                 ownServerSocket.close();
-                System.out.println("Server locale chiuso.");
             }
+            p2pConnectedClients.clear();
         } catch (IOException e) {
-            System.err.println("Errore durante la Chiusura delle Risorse P2P: " + e.getMessage());
         }
     }
 
@@ -170,37 +153,26 @@ public class ClientLogic {
             byte[] key = sha.digest(keyMaterial.getBytes("UTF-8"));
             return Base64.getEncoder().encodeToString(key);
         } catch (Exception e) {
-            System.err.println("Errore nella derivazione della chiave: " + e.getMessage());
             return null;
         }
     }
 
     public void createOtcChatSession(int port, MainFrame mainFrame) throws IOException {
         if (this.username == null || this.username.length() < 2) {
-            System.err.println("Errore: Username del moderatore troppo corto per creare la chat P2P.");
             javax.swing.JOptionPane.showMessageDialog(null, "Il tuo username è troppo corto per creare questa chat (minimo 2 caratteri).", "Errore Username", javax.swing.JOptionPane.ERROR_MESSAGE);
             return;
         }
         ownServerSocket = new ServerSocket(port);
-        System.out.println("Chat OTC in ascolto su porta: " + port);
         isModerator = true;
-        executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    System.out.println("In attesa di connessioni OTC su porta " + port + "...");
-                    while (!ownServerSocket.isClosed()) {
-                        Socket connectionSocket = ownServerSocket.accept();
-                        System.out.println("Nuovo client connesso alla chat OTC su localhost:" + port);
-                        ChatClientHandler handler = new ChatClientHandler(connectionSocket, null, username, null, mainFrame, "Chat_OTC_" + port);
-                        executor.submit(handler);
-                    }
-                } catch (IOException e) {
-                    if (!ownServerSocket.isClosed()) {
-                        System.err.println("Errore durante l'attesa o la gestione delle connessioni OTC: " + e.getMessage());
-                        e.printStackTrace();
-                    }
+        p2pConnectedClients.clear();
+        executor.submit(() -> {
+            try {
+                while (!ownServerSocket.isClosed()) {
+                    Socket connectionSocket = ownServerSocket.accept();
+                    ChatClientHandler handler = new ChatClientHandler(connectionSocket, null, username, null, mainFrame, "Chat_OTC_" + port);
+                    executor.submit(handler);
                 }
+            } catch (IOException e) {
             }
         });
         startP2PConnection("localhost", port, true, mainFrame, "Chat_OTC_" + port);
@@ -208,31 +180,21 @@ public class ClientLogic {
 
     public void createNonOtcChatSession(int port, String logFileName, String configFileName, String passKey, MainFrame mainFrame) throws IOException {
         if (this.username == null) {
-            System.err.println("Errore: Username del moderatore troppo corto per creare la chat P2P.");
             javax.swing.JOptionPane.showMessageDialog(null, "Il tuo username è inesistente.", "Errore Username", javax.swing.JOptionPane.ERROR_MESSAGE);
             return;
         }
         ownServerSocket = new ServerSocket(port);
         ownLogFileName = logFileName;
-        System.out.println("Chat NON-OTC in ascolto su porta: " + port + ", logbook: " + logFileName + ", config: " + configFileName);
         isModerator = true;
-        executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    System.out.println("In attesa di connessioni NON-OTC su porta " + port + "...");
-                    while (!ownServerSocket.isClosed()) {
-                        Socket connectionSocket = ownServerSocket.accept();
-                        System.out.println("Nuovo client richiedente connessione alla chat NON-OTC su localhost:" + port);
-                        ChatClientHandler handler = new ChatClientHandler(connectionSocket, configFileName, username, logFileName, mainFrame, "Chat_NON_OTC_" + port);
-                        executor.submit(handler);
-                    }
-                } catch (IOException e) {
-                    if (!ownServerSocket.isClosed()) {
-                        System.err.println("Errore durante l'attesa o la gestione delle connessioni NON-OTC: " + e.getMessage());
-                        e.printStackTrace();
-                    }
+        p2pConnectedClients.clear();
+        executor.submit(() -> {
+            try {
+                while (!ownServerSocket.isClosed()) {
+                    Socket connectionSocket = ownServerSocket.accept();
+                    ChatClientHandler handler = new ChatClientHandler(connectionSocket, configFileName, username, logFileName, mainFrame, "Chat_NON_OTC_" + port);
+                    executor.submit(handler);
                 }
+            } catch (IOException e) {
             }
         });
         startP2PConnection("localhost", port, true, mainFrame, "Chat_NON_OTC_" + port);
@@ -240,18 +202,11 @@ public class ClientLogic {
 
     public boolean joinChat(String ip, int port, String passKey, MainFrame mainFrame, String chatName) {
         if (this.username == null || this.username.isEmpty()) {
-            System.err.println("Errore: Username non valido (nullo o vuoto) per connettersi alla chat P2P.");
-            javax.swing.JOptionPane.showMessageDialog(
-                    null,
-                    "Il tuo username non è valido. Impossibile connettersi alla chat.",
-                    "Errore Username",
-                    javax.swing.JOptionPane.ERROR_MESSAGE
-            );
+            javax.swing.JOptionPane.showMessageDialog(null, "Il tuo username non è valido. Impossibile connettersi alla chat.", "Errore Username", javax.swing.JOptionPane.ERROR_MESSAGE);
             return false;
         }
         try {
             Socket chatSocket = new Socket(ip, port);
-            System.out.println("Connesso al moderatore su " + ip + ":" + port);
             PrintWriter outToModerator = new PrintWriter(chatSocket.getOutputStream(), true);
             BufferedReader inFromModerator = new BufferedReader(new InputStreamReader(chatSocket.getInputStream()));
 
@@ -259,42 +214,45 @@ public class ClientLogic {
 
             String response = inFromModerator.readLine();
             if ("true".equals(response)) {
-                System.out.println("=== Connessione accettata dal moderatore. Connessione P2P stabilita. ===");
                 this.p2pChatSocket = chatSocket;
                 this.p2pChatOut = outToModerator;
                 this.p2pChatIn = inFromModerator;
                 this.isModerator = false;
                 mainFrame.addChatTab(chatName, this);
-                executor.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            String p2pMessage;
-                            while ((p2pMessage = inFromModerator.readLine()) != null) {
-                                System.out.println("Messaggio P2P ricevuto: " + p2pMessage);
-                                MessageListener listener = chatListeners.get(chatName);
-                                if (listener != null) {
-                                    listener.onMessageReceived(p2pMessage);
+                executor.submit(() -> {
+                    try {
+                        String line;
+                        boolean logbookLoaded = false;
+                        StringBuilder logbookBuffer = new StringBuilder();
+                        while ((line = inFromModerator.readLine()) != null) {
+                            if (!logbookLoaded && line.equals("!LOGBOOK_START!")) {
+                                while ((line = inFromModerator.readLine()) != null && !line.equals("!LOGBOOK_END!")) {
+                                    logbookBuffer.append(line).append("\n");
                                 }
+                                logbookLoaded = true;
+                                MessageListener listener = chatListeners.get(chatName);
+                                if (listener != null && logbookBuffer.length() > 0) {
+                                    for (String msg : logbookBuffer.toString().split("\n")) {
+                                        if (!msg.trim().isEmpty()) listener.onMessageReceived(msg);
+                                    }
+                                }
+                                continue;
                             }
-                        } catch (IOException e) {
-                            System.err.println("Errore lettura messaggi P2P: " + e.getMessage());
-                            e.printStackTrace();
+                            MessageListener listener = chatListeners.get(chatName);
+                            if (listener != null) {
+                                listener.onMessageReceived(line);
+                            }
                         }
+                    } catch (IOException e) {
                     }
                 });
                 outToModerator.println("Ciao dal client " + this.username + "!");
-                System.out.println("=== RETURN: true ===");
                 return true;
             } else {
-                System.out.println("=== Connessione rifiutata dal moderatore o passkey errata. ===");
                 chatSocket.close();
-                System.out.println("=== RETURN: false ===");
                 return false;
             }
         } catch (Exception e) {
-            System.err.println("Errore durante la connessione alla chat: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }
@@ -302,39 +260,45 @@ public class ClientLogic {
     private void startP2PConnection(String ip, int port, boolean isModeratorConnection, MainFrame mainFrame, String chatName) {
         try {
             p2pChatSocket = new Socket(ip, port);
-            System.out.println("Connesso alla propria chat su " + ip + ":" + port + (isModeratorConnection ? " (come moderatore)." : " (come client esterno)."));
             p2pChatOut = new PrintWriter(p2pChatSocket.getOutputStream(), true);
             p2pChatIn = new BufferedReader(new InputStreamReader(p2pChatSocket.getInputStream()));
             mainFrame.addChatTab(chatName, this);
-            executor.submit(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        String p2pMessage;
-                        while ((p2pMessage = p2pChatIn.readLine()) != null) {
-                            System.out.println("Messaggio P2P ricevuto: " + p2pMessage);
-                            MessageListener listener = chatListeners.get(chatName);
-                            if (listener != null) {
-                                listener.onMessageReceived(p2pMessage);
+            executor.submit(() -> {
+                try {
+                    String line;
+                    boolean logbookLoaded = false;
+                    StringBuilder logbookBuffer = new StringBuilder();
+                    while ((line = p2pChatIn.readLine()) != null) {
+                        if (!logbookLoaded && line.equals("!LOGBOOK_START!")) {
+                            while ((line = p2pChatIn.readLine()) != null && !line.equals("!LOGBOOK_END!")) {
+                                logbookBuffer.append(line).append("\n");
                             }
+                            logbookLoaded = true;
+                            MessageListener listener = chatListeners.get(chatName);
+                            if (listener != null && logbookBuffer.length() > 0) {
+                                for (String msg : logbookBuffer.toString().split("\n")) {
+                                    if (!msg.trim().isEmpty()) listener.onMessageReceived(msg);
+                                }
+                            }
+                            continue;
                         }
-                    } catch (IOException e) {
-                        System.err.println("Errore lettura messaggi P2P (" + (isModeratorConnection ? "moderatore" : "client") + "): " + e.getMessage());
-                        if (isModerator && isModeratorConnection) {
-                            System.out.println("Il moderatore ha perso la connessione. Chiudendo la chat P2P...");
-                            closeP2PResources();
-                            isModerator = false;
+                        MessageListener listener = chatListeners.get(chatName);
+                        if (listener != null) {
+                            listener.onMessageReceived(line);
                         }
+                    }
+                } catch (IOException e) {
+                    if (isModerator && isModeratorConnection) {
+                        closeP2PResources();
+                        isModerator = false;
                     }
                 }
             });
             if (isModeratorConnection) {
+                p2pConnectedClients.add(p2pChatOut);
                 p2pChatOut.println("SERVER: Benvenuto nella chat (creata da te)!");
-                System.out.println("Messaggio inviato come moderatore.");
             }
         } catch (IOException e) {
-            System.err.println("Errore durante la connessione alla propria chat (" + (isModeratorConnection ? "moderatore" : "client") + "): " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -344,12 +308,8 @@ public class ClientLogic {
 
     public void exitP2PChat() {
         if (isModeratorOfP2PChat()) {
-            System.out.println("Moderatore esce dalla chat. Chiudendo la chat P2P e il proprio server...");
             closeP2PResources();
             isModerator = false;
-            System.out.println("Chat P2P chiusa.");
-        } else {
-            System.out.println("Non sei il moderatore di una chat P2P attiva.");
         }
     }
 
@@ -362,7 +322,14 @@ public class ClientLogic {
     }
 
     public void sendP2PMessage(String message) {
-        if (p2pChatOut != null) {
+        if (isModeratorOfP2PChat()) {
+            for (PrintWriter out : p2pConnectedClients) {
+                out.println(message);
+            }
+            for (MessageListener listener : chatListeners.values()) {
+                listener.onMessageReceived(message);
+            }
+        } else if (p2pChatOut != null) {
             p2pChatOut.println(message);
         }
     }
@@ -390,12 +357,13 @@ public class ClientLogic {
 
         @Override
         public void run() {
-            try (BufferedReader inFromClient = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                 PrintWriter outToClient = new PrintWriter(clientSocket.getOutputStream(), true)) {
+            PrintWriter outToClient = null;
+            try (BufferedReader inFromClient = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
+                outToClient = new PrintWriter(clientSocket.getOutputStream(), true);
+                p2pConnectedClients.add(outToClient);
                 String requestLine = inFromClient.readLine();
                 if (requestLine != null && requestLine.startsWith("PASSKEY_REQUEST:")) {
                     String receivedPassKey = requestLine.substring("PASSKEY_REQUEST:".length());
-
                     String storedPassKey = null;
                     if (configFileName != null) {
                         try (BufferedReader configReader = new BufferedReader(new FileReader(configFileName))) {
@@ -410,19 +378,16 @@ public class ClientLogic {
                     }
 
                     boolean isValid = (configFileName == null) || (storedPassKey != null && storedPassKey.equals(receivedPassKey));
-
                     outToClient.println(String.valueOf(isValid));
-
                     if (isValid) {
-                        System.out.println("Client connesso correttamente.");
+                        sendLogbookToClient(outToClient, logFileName);
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                         if (logFileName != null) {
-                            try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(logFileName, true))) {
+                            try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFileName, true))) {
                                 String timestampedWelcome = "[" + LocalDateTime.now().format(formatter) + "] CLIENT: Connesso correttamente.";
                                 writer.write(timestampedWelcome);
                                 writer.newLine();
                             } catch (IOException e) {
-                                System.err.println("Errore scrittura logbook (connessione): " + e.getMessage());
                             }
                         }
                         MessageListener listener = chatListeners.get(chatName);
@@ -431,37 +396,42 @@ public class ClientLogic {
                         }
                         String p2pMessage;
                         while ((p2pMessage = inFromClient.readLine()) != null) {
-                            System.out.println("Messaggio P2P ricevuto dal client: " + p2pMessage);
+                            for (PrintWriter out : p2pConnectedClients) {
+                                out.println(p2pMessage);
+                            }
                             for (MessageListener l : chatListeners.values()) {
                                 l.onMessageReceived(p2pMessage);
                             }
                             if (logFileName != null) {
-                                try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(logFileName, true))) {
+                                try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFileName, true))) {
                                     String timestampedMessage = "[" + LocalDateTime.now().format(formatter) + "] CLIENT: " + p2pMessage;
                                     writer.write(timestampedMessage);
                                     writer.newLine();
                                 } catch (IOException e) {
-                                    System.err.println("Errore scrittura logbook (messaggio): " + e.getMessage());
                                 }
                             }
                         }
-                    } else {
-                        System.out.println("Client rifiutato: passkey non corretta.");
                     }
-                } else {
-                    System.out.println("Connessione ricevuta ma nessun messaggio di richiesta passkey inviato immediatamente.");
                 }
             } catch (Exception e) {
-                System.err.println("Errore nella gestione del client come moderatore: " + e.getMessage());
-                e.printStackTrace();
             } finally {
-                try {
-                    clientSocket.close();
-                    System.out.println("Connessione con il client richiedente chiusa.");
-                } catch (IOException e) {
-                    System.err.println("Errore chiusura socket client: " + e.getMessage());
-                }
+                if (outToClient != null) p2pConnectedClients.remove(outToClient);
+                try { clientSocket.close(); } catch (IOException e) { }
             }
+        }
+
+        private void sendLogbookToClient(PrintWriter outToClient, String logFileName) {
+            if (logFileName == null) return;
+            File logFile = new File(logFileName);
+            if (!logFile.exists()) return;
+            outToClient.println("!LOGBOOK_START!");
+            try (BufferedReader reader = new BufferedReader(new FileReader(logFile))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    outToClient.println(line);
+                }
+            } catch (IOException e) { }
+            outToClient.println("!LOGBOOK_END!");
         }
     }
 }
